@@ -1,5 +1,6 @@
 package config
 
 type Config struct {
-	test int
+	test  int
+	test1 int
 }
