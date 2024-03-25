@@ -1,0 +1,9 @@
+dataBase:
+  dbHost: "localhost"
+  dbPort: "5432"
+  dbName: "currency"
+  dbUser: "postgres"
+  dbPassword: "7777777"
+
+host:
+  hostPort: ":8080"

@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres  
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: currency
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 7777777
+    ports:
+      - 5432:5432
+    volumes:
+      - ./migrations/migrations_up.sql:/docker-entrypoint-initdb.d/migrations_up.sql
+      - ./data:/var/lib/postgresql/data
+  
+  
