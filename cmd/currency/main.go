@@ -7,6 +7,6 @@ import (
 )
 
 func main() {
-	fmt.Println("hello")
+	fmt.Println("test")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
