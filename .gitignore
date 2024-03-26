@@ -1,3 +1,4 @@
 data/
 .git/
 .golangci.yml
+help.txt
