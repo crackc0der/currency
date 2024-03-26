@@ -1,4 +1,4 @@
-create database 'currency';
+create database exachange_rates;
 
 create table if not exists currency (
     id serial primary key,

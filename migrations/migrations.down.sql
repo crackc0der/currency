@@ -1,1 +1,1 @@
-drop database 'currency';
+drop database currency;
