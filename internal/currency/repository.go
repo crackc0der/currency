@@ -53,14 +53,42 @@ func (r Repository) SelectCurrency(ctx context.Context, name string) (*Currency,
 	return currency, nil
 }
 
-func (r Repository) InsertCurrencies(currencies []Currency) bool {
+func (r Repository) InsertCurrencies(ctx context.Context, currencies []Currency) ([]Currency, error) {
+	query := "insert into currency (currency_name, price_min, price_max, changes_per_hour) values (@currencyName, @priceMin, @priceMax, @changesPerHour)"
+	batch := &pgx.Batch{}
+
+	for _, currency := range currencies {
+		args := pgx.NamedArgs{
+			"currenncyName":  currency.CurrencyName,
+			"priceMin":       currency.CurrencyMinPrice,
+			"priceMax":       currency.CurrencyMaxPrice,
+			"changesPerHour": currency.CurrencyPercentageChange,
+		}
+
+		batch.Queue(query, args)
+	}
+
+	results := r.conn.SendBatch(ctx, batch)
+	defer results.Close()
+
+	for _, currency := range currencies {
+		_, err := results.Exec()
+		if err != nil {
+			return nil, fmt.Errorf("error to insert %v with error %w", currency, err)
+		}
+	}
+
+	return currencies, nil
 }
 
-func (r Repository) InsertCurrency(currency Currency) bool {
-}
+func (r Repository) SelectChangesPerHour(ctx context.Context, curr string) (float64, error) {
+	var currencyPerHour float64
+	query := "select changes_per_hour from currency where currency_name = $1"
+	err := r.conn.QueryRow(ctx, query, &currencyPerHour).Scan(&currencyPerHour)
 
-func (r Repository) UpdateCurrencies(currency Currency) bool {
-}
+	if err != nil {
+		return -1, err
+	}
 
-func (r Repository) SelectChangesPerHour(curr string) float64 {
+	return currencyPerHour, nil
 }
