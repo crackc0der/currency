@@ -5,8 +5,15 @@ import (
 	"fmt"
 )
 
+type RepositoryInterface interface {
+	SelectAllCurrencies(context.Context) ([]Currency, error)
+	SelectCurrency(context.Context, string) (*Currency, error)
+	InsertCurrencies(context.Context, []Currency) ([]Currency, error)
+	SelectChangesPerHour(context.Context, string) (float64, error)
+}
+
 type Service struct {
-	repository Repository
+	repository RepositoryInterface
 }
 
 func (s Service) GetCurrencies(ctx context.Context) ([]Currency, error) {
