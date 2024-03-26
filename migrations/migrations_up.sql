@@ -1,6 +1,6 @@
 create database 'currency';
 
-create table if not exists 'currency' (
+create table if not exists currency (
     id serial primary key,
     currency_name varchar(255) not null,
     price_min float not null,
