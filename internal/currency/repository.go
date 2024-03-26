@@ -25,14 +25,14 @@ func (r Repository) SelectAllCurrencies(ctx context.Context) ([]Currency, error)
 	rows, err := r.conn.Query(ctx, query)
 
 	if err != nil {
-		return nil, fmt.Errorf("error to select all currencies in method repositery's method SelectCurrencies: %w", err)
+		return nil, fmt.Errorf("error to select all currencies in repositery's method SelectCurrencies: %w", err)
 	}
 
 	for rows.Next() {
 		var currency Currency
 		err := rows.Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice, &currency.CurrencyMinPrice, &currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange)
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("failed to get currency in repositery's method SelectAllCurrencies, Scan: %w", err)
 		}
 
 		currencies = append(currencies, currency)
@@ -47,14 +47,16 @@ func (r Repository) SelectCurrency(ctx context.Context, name string) (*Currency,
 	err := r.conn.QueryRow(ctx, query, name).Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice, &currency.CurrencyMinPrice, &currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get currency in method SelectCurrency: %w", err)
+		return nil, fmt.Errorf("failed to get currency in repositery's method SelectCurrency: %w", err)
 	}
 
 	return currency, nil
 }
 
 func (r Repository) InsertCurrencies(ctx context.Context, currencies []Currency) ([]Currency, error) {
-	query := "insert into currency (currency_name, price_min, price_max, changes_per_hour) values (@currencyName, @priceMin, @priceMax, @changesPerHour)"
+	query := `insert into currency (currency_name, price_min, price_max, changes_per_hour) 
+				values (@currencyName, @priceMin, @priceMax, @changesPerHour) on conflict (currency_name) do update set
+				currency_name=currencyName, price_min=priceMin, price_max=priceMax, changes_per_hour=changesPerHour`
 	batch := &pgx.Batch{}
 
 	for _, currency := range currencies {
@@ -74,7 +76,7 @@ func (r Repository) InsertCurrencies(ctx context.Context, currencies []Currency)
 	for _, currency := range currencies {
 		_, err := results.Exec()
 		if err != nil {
-			return nil, fmt.Errorf("error to insert %v with error %w", currency, err)
+			return nil, fmt.Errorf("error to insert %v in repositery's method InsertCurrencies %w", currency, err)
 		}
 	}
 
@@ -87,7 +89,7 @@ func (r Repository) SelectChangesPerHour(ctx context.Context, curr string) (floa
 	err := r.conn.QueryRow(ctx, query, &currencyPerHour).Scan(&currencyPerHour)
 
 	if err != nil {
-		return -1, err
+		return -1, fmt.Errorf("failed to get changes per hour in repositery's method SelectChangesPerHour %w", err)
 	}
 
 	return currencyPerHour, nil
