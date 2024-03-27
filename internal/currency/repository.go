@@ -76,7 +76,7 @@ func (r Repository) InsertCurrencies(ctx context.Context, currencies []Currency)
 	for _, currency := range currencies {
 		_, err := results.Exec()
 		if err != nil {
-			return nil, fmt.Errorf("error to insert %v in repositery's method InsertCurrencies %w", currency, err)
+			return nil, fmt.Errorf("error to insert %v in repositery's method InsertCurrencies %w", currency.CurrencyName, err)
 		}
 	}
 
