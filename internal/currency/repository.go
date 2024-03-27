@@ -12,6 +12,7 @@ func NewRepository(dsn string) (*Repository, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new repository in method NewRepository: %w", err)
 	}
+
 	return &Repository{conn: conn}, nil
 }
 
@@ -21,6 +22,7 @@ type Repository struct {
 
 func (r Repository) SelectAllCurrencies(ctx context.Context) ([]Currency, error) {
 	var currencies []Currency
+
 	query := "select * from currency"
 	rows, err := r.conn.Query(ctx, query)
 
@@ -30,7 +32,9 @@ func (r Repository) SelectAllCurrencies(ctx context.Context) ([]Currency, error)
 
 	for rows.Next() {
 		var currency Currency
-		err := rows.Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice, &currency.CurrencyMinPrice, &currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange)
+
+		err := rows.Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice, &currency.CurrencyMinPrice,
+			&currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get currency in repositery's method SelectAllCurrencies, Scan: %w", err)
 		}
@@ -43,8 +47,10 @@ func (r Repository) SelectAllCurrencies(ctx context.Context) ([]Currency, error)
 
 func (r Repository) SelectCurrency(ctx context.Context, name string) (*Currency, error) {
 	var currency *Currency
+
 	query := "select * from currency where currency_name = $1"
-	err := r.conn.QueryRow(ctx, query, name).Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice, &currency.CurrencyMinPrice, &currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange)
+	err := r.conn.QueryRow(ctx, query, name).Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice,
+		&currency.CurrencyMinPrice, &currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get currency in repositery's method SelectCurrency: %w", err)
@@ -85,8 +91,9 @@ func (r Repository) InsertCurrencies(ctx context.Context, currencies []Currency)
 
 func (r Repository) SelectChangesPerHour(ctx context.Context, curr string) (float64, error) {
 	var currencyPerHour float64
+
 	query := "select changes_per_hour from currency where currency_name = $1"
-	err := r.conn.QueryRow(ctx, query, &currencyPerHour).Scan(&currencyPerHour)
+	err := r.conn.QueryRow(ctx, query, curr).Scan(&currencyPerHour)
 
 	if err != nil {
 		return -1, fmt.Errorf("failed to get changes per hour in repositery's method SelectChangesPerHour %w", err)

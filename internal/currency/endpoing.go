@@ -25,42 +25,39 @@ func NewEndpoint(service Service, log *slog.Logger) *Endpoint {
 	return &Endpoint{service: service, log: log}
 }
 
-func (e Endpoint) GetCurrencies(w http.ResponseWriter, r *http.Request) {
-	currencies, err := e.service.GetCurrencies(r.Context())
-
+func (e Endpoint) GetCurrencies(writer http.ResponseWriter, request *http.Request) {
+	currencies, err := e.service.GetCurrencies(request.Context())
 	if err != nil {
 		e.log.Error("Error getting currencies in method GetCurrencies: " + err.Error())
 	}
 
-	if err = json.NewEncoder(w).Encode(&currencies); err != nil {
+	if err = json.NewEncoder(writer).Encode(&currencies); err != nil {
 		e.log.Error("Error encoding currency: " + err.Error())
 	}
 }
 
-func (e Endpoint) GetCurrency(w http.ResponseWriter, r *http.Request) {
-	currencyName := mux.Vars(r)["name"]
+func (e Endpoint) GetCurrency(writer http.ResponseWriter, request *http.Request) {
+	currencyName := mux.Vars(request)["name"]
 
-	currency, err := e.service.GetCurrency(r.Context(), currencyName)
-
+	currency, err := e.service.GetCurrency(request.Context(), currencyName)
 	if err != nil {
 		e.log.Error("Error getting currency: " + err.Error())
 	}
 
-	if err = json.NewEncoder(w).Encode(&currency); err != nil {
+	if err = json.NewEncoder(writer).Encode(&currency); err != nil {
 		e.log.Error("Error encoding currency: " + err.Error())
 	}
 }
 
-func (e Endpoint) GetChangesPerHour(w http.ResponseWriter, r *http.Request) {
-	currencyName := mux.Vars(r)["name"]
+func (e Endpoint) GetChangesPerHour(writer http.ResponseWriter, request *http.Request) {
+	currencyName := mux.Vars(request)["name"]
 
-	currencyChange, err := e.service.GetChangesPerHour(r.Context(), currencyName)
-
+	currencyChange, err := e.service.GetChangesPerHour(request.Context(), currencyName)
 	if err != nil {
 		e.log.Error("Error getting currency: " + err.Error())
 	}
 
-	if err = json.NewEncoder(w).Encode(&currencyChange); err != nil {
+	if err = json.NewEncoder(writer).Encode(&currencyChange); err != nil {
 		e.log.Error("Error encoding currencyChange: " + err.Error())
 	}
 }

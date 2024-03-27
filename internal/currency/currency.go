@@ -3,10 +3,10 @@ package currency
 import "github.com/google/uuid"
 
 type Currency struct {
-	CurrencyID               uuid.UUID `json:"currency_id"`
-	CurrencyName             string    `json:"currency_name"`
-	CurrencyPrice            float64   `json:"currency_price"`
-	CurrencyMinPrice         float64   `json:"currency_min_price"`
-	CurrencyMaxPrice         float64   `json:"currency_max_price"`
-	CurrencyPercentageChange float64   `json:"currency_percentage_change"`
+	CurrencyID               uuid.UUID `json:"currencyId"`
+	CurrencyName             string    `json:"currencyName"`
+	CurrencyPrice            float64   `json:"currencyPrice"`
+	CurrencyMinPrice         float64   `json:"currencyMinPrice"`
+	CurrencyMaxPrice         float64   `json:"currencyMaxPrice"`
+	CurrencyPercentageChange float64   `json:"currencyPercentageChange"`
 }
