@@ -1,9 +1,11 @@
-dataBase:
-  dbHost: "localhost"
-  dbPort: "5432"
-  dbName: "currency"
-  dbUser: "postgres"
-  dbPassword: "7777777"
+DataBase:
+  DbHost: "localhost"
+  DbPort: "5432"
+  DbName: "currency"
+  DbUser: "postgres"
+  DbPassword: "7777777"
 
-host:
-  hostPort: ":8080"
+Host:
+  HostPort: ":8080"
+
+ApiKey: "4e97f1d52a1f42aa64dca05e927d0459"

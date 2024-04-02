@@ -3,6 +3,9 @@ package currency
 import (
 	"context"
 	"encoding/json"
+	"exchange_course/config"
+	"fmt"
+	"io/ioutil"
 	"log/slog"
 	"net/http"
 
@@ -19,10 +22,11 @@ type EndpointInterface interface {
 type Endpoint struct {
 	service Service
 	log     *slog.Logger
+	config  *config.Config
 }
 
-func NewEndpoint(service Service, log *slog.Logger) *Endpoint {
-	return &Endpoint{service: service, log: log}
+func NewEndpoint(service Service, log *slog.Logger, config *config.Config) *Endpoint {
+	return &Endpoint{service: service, log: log, config: config}
 }
 
 func (e Endpoint) GetCurrencies(writer http.ResponseWriter, request *http.Request) {
@@ -60,4 +64,29 @@ func (e Endpoint) GetChangesPerHour(writer http.ResponseWriter, request *http.Re
 	if err = json.NewEncoder(writer).Encode(&currencyChange); err != nil {
 		e.log.Error("Error encoding currencyChange: " + err.Error())
 	}
+}
+
+func (e Endpoint) CurrencyMonitor() {
+	url := "https://currate.ru/api/?get=rates&pairs=BTCRUB,ETHRUB&key=" + e.config.ApiKey
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		e.log.Error("error creating request: " + err.Error())
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		e.log.Error("error doing request: " + err.Error())
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		e.log.Error("error reading response body: " + err.Error())
+	}
+	fmt.Println("response Body:", string(body))
 }
