@@ -46,7 +46,7 @@ func (r Repository) SelectAllCurrencies(ctx context.Context) ([]Currency, error)
 }
 
 func (r Repository) SelectCurrency(ctx context.Context, name string) (*Currency, error) {
-	var currency *Currency
+	var currency Currency
 
 	query := "select * from currency where currency_name = $1"
 	err := r.conn.QueryRow(ctx, query, name).Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice,
@@ -56,7 +56,7 @@ func (r Repository) SelectCurrency(ctx context.Context, name string) (*Currency,
 		return nil, fmt.Errorf("failed to get currency in repositery's method SelectCurrency: %w", err)
 	}
 
-	return currency, nil
+	return &currency, nil
 }
 
 func (r Repository) InsertCurrencies(ctx context.Context, currencies []Currency) ([]Currency, error) {
