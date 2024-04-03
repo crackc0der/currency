@@ -16,6 +16,10 @@ type Service struct {
 	repository RepositoryInterface
 }
 
+func NewService(repository RepositoryInterface) *Service {
+	return &Service{repository: repository}
+}
+
 func (s Service) GetCurrencies(ctx context.Context) ([]Currency, error) {
 	currencies, err := s.repository.SelectAllCurrencies(ctx)
 	if err != nil {

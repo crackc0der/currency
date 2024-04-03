@@ -1,7 +1,7 @@
 DataBase:
-  DbHost: "localhost"
+  DbHost: "db"
   DbPort: "5432"
-  DbName: "currency"
+  DbName: "exachange_rates"
   DbUser: "postgres"
   DbPassword: "7777777"
 

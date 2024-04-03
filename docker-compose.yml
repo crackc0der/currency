@@ -2,16 +2,21 @@ version: '3.9'
 
 services:
   api:
+    container_name: api
     build: .
     ports:
       - "8080:8080"
     depends_on:
-      - postgres  
+      db:
+        condition: service_healthy 
+    networks:
+     - app-network
 
-  postgres:
+  db:
+    container_name: db
     image: postgres:latest
     environment:
-      POSTGRES_DB: currency
+      POSTGRES_DB: exachange_rates
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 7777777
     ports:
@@ -19,5 +24,18 @@ services:
     volumes:
       - ./migrations/migrations_up.sql:/docker-entrypoint-initdb.d/migrations_up.sql
       - ./data:/var/lib/postgresql/data
+    networks:
+     - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d exachange_rates -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  app-network:
+    driver: bridge
+
+
   
   
