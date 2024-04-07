@@ -10,3 +10,14 @@ type Currency struct {
 	CurrencyMaxPrice         float64   `json:"currencyMaxPrice"`
 	CurrencyPercentageChange float64   `json:"currencyPercentageChange"`
 }
+
+type DataCurrencyMonitor struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+	Data    Data   `json:"data"`
+}
+
+type Data struct {
+	BTCRUB string `json:"BTCRUB"`
+	ETHRUB string `json:"ETHRUB"`
+}

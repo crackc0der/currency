@@ -3,7 +3,7 @@ package config
 type Config struct {
 	DataBase DataBase `yaml:"DataBase"`
 	Host     Host     `yaml:"Host"`
-	ApiKey   string   `yamk:"ApiKey"`
+	ApiKey   string   `yaml:"ApiKey"`
 }
 
 type DataBase struct {

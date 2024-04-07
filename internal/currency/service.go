@@ -3,6 +3,7 @@ package currency
 import (
 	"context"
 	"fmt"
+	"strconv"
 )
 
 type RepositoryInterface interface {
@@ -23,7 +24,7 @@ func NewService(repository RepositoryInterface) *Service {
 func (s Service) GetCurrencies(ctx context.Context) ([]Currency, error) {
 	currencies, err := s.repository.SelectAllCurrencies(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error to get currencies in service's method GetCurrencies %w", err)
+		return nil, fmt.Errorf("error in method GetCurrencies %w", err)
 	}
 
 	return currencies, nil
@@ -32,25 +33,92 @@ func (s Service) GetCurrencies(ctx context.Context) ([]Currency, error) {
 func (s Service) GetCurrency(ctx context.Context, currencyName string) (*Currency, error) {
 	currency, err := s.repository.SelectCurrency(ctx, currencyName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get currency in method GetCurrency: %w", err)
+		return nil, fmt.Errorf("error in method GetCurrency: %w", err)
 	}
 
 	return currency, nil
 }
 
-func (s Service) SetCurrencies(ctx context.Context, currencies []Currency) ([]Currency, error) {
-	currencies, err := s.repository.InsertCurrencies(ctx, currencies)
+// func (s Service) SetCurrencies(ctx context.Context, currencies []Currency) ([]Currency, error) {
+// 	currencies, err := s.repository.InsertCurrencies(ctx, currencies)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to insert currencies in method SetCurrencies: %w", err)
+// 	}
+
+// 	return currencies, nil
+// }
+
+func (s Service) SetCurrencies(ctx context.Context, data Data) error {
+	var currencies []Currency
+	var currency Currency
+	var minPrice float64
+	var maxPrice float64
+
+	BTCRUB, err := strconv.ParseFloat(data.BTCRUB, 64)
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert currencies in method SetCurrencies: %w", err)
+		return fmt.Errorf("error in method SetCurrencies: %w", err)
+	}
+	ETHRUB, err := strconv.ParseFloat(data.ETHRUB, 64)
+	if err != nil {
+		return fmt.Errorf("error in method SetCurrencies: %w", err)
 	}
 
-	return currencies, nil
+	currencyData := [2]struct {
+		Name  string
+		Price float64
+	}{
+		{
+			"BTC",
+			BTCRUB,
+		},
+		{
+			"ETH",
+			ETHRUB,
+		},
+	}
+
+	for i := 0; i < len(currencyData); i++ {
+		c, _ := s.repository.SelectCurrency(ctx, currencyData[i].Name)
+		// if err != nil {
+		// 	return fmt.Errorf("error in method SetCurrencies: %w", err)
+		// }
+
+		if c != nil {
+			if currencyData[i].Price < c.CurrencyMinPrice {
+				minPrice = currencyData[i].Price
+			} else {
+				minPrice = c.CurrencyMinPrice
+
+				if currencyData[i].Price > c.CurrencyMaxPrice {
+					maxPrice = c.CurrencyMaxPrice
+				} else {
+					maxPrice = c.CurrencyMaxPrice
+				}
+			}
+		}
+
+		currency.CurrencyName = currencyData[i].Name
+		currency.CurrencyPrice = currencyData[i].Price
+		currency.CurrencyMinPrice = minPrice
+		currency.CurrencyMaxPrice = maxPrice
+		currency.CurrencyPercentageChange = 0.0
+
+		currencies = append(currencies, currency)
+		fmt.Println(currencyData[i])
+	}
+
+	_, err = s.repository.InsertCurrencies(ctx, currencies)
+	if err != nil {
+		return fmt.Errorf("error in method SetCurrency: %w", err)
+	}
+
+	return nil
 }
 
 func (s Service) GetChangesPerHour(ctx context.Context, currency string) (float64, error) {
 	change, err := s.repository.SelectChangesPerHour(ctx, currency)
 	if err != nil {
-		return -1, fmt.Errorf("error getting changes per hour in method GetChangesPerHour: %w", err)
+		return -1, fmt.Errorf("error in method GetChangesPerHour: %w", err)
 	}
 
 	return change, nil

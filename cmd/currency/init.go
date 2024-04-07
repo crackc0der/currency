@@ -3,7 +3,6 @@ package main
 import (
 	"exchange_course/config"
 	"exchange_course/internal/currency"
-	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -31,7 +30,7 @@ func Run() {
 
 	dsn := "postgres://" + config.DataBase.DbUser + ":" + config.DataBase.DbPassword + "@" + config.DataBase.DbHost + ":" + config.DataBase.DbPort + "/" + config.DataBase.DbName + "?sslmode=disable"
 	repository, err := currency.NewRepository(dsn)
-	fmt.Println(dsn)
+
 	if err != nil {
 		log.Fatal("error creating repository: ", err)
 	}
@@ -39,6 +38,8 @@ func Run() {
 	service := currency.NewService(repository)
 
 	endpoint := currency.NewEndpoint(service, logger, &config)
+
+	endpoint.CurrencyMonitor()
 
 	r.HandleFunc("/", endpoint.GetCurrencies)
 	log.Fatal(http.ListenAndServe(":8080", nil))
