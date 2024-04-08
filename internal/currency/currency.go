@@ -1,6 +1,10 @@
 package currency
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Currency struct {
 	CurrencyID               uuid.UUID `json:"currencyId"`
@@ -9,6 +13,7 @@ type Currency struct {
 	CurrencyMinPrice         float64   `json:"currencyMinPrice"`
 	CurrencyMaxPrice         float64   `json:"currencyMaxPrice"`
 	CurrencyPercentageChange float64   `json:"currencyPercentageChange"`
+	CurrencyLastUpdate       time.Time `json:"currencyLastUpdate"`
 }
 
 type DataCurrencyMonitor struct {

@@ -95,6 +95,9 @@ func (s Service) SetCurrencies(ctx context.Context, data Data) error {
 					maxPrice = c.CurrencyMaxPrice
 				}
 			}
+		} else {
+			minPrice = currencyData[i].Price
+			maxPrice = currencyData[i].Price
 		}
 
 		currency.CurrencyName = currencyData[i].Name
