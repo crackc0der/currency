@@ -13,7 +13,7 @@ import (
 )
 
 func Run() {
-	configFile, err := os.ReadFile("config/config.yaml")
+	configFile, err := os.ReadFile("../../config/config.yaml")
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	r := mux.NewRouter()
 
