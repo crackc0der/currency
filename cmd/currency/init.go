@@ -15,7 +15,7 @@ import (
 func Run() {
 	configFile, err := os.ReadFile("../../config/config.yaml")
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	r := mux.NewRouter()
+	router := mux.NewRouter()
 
 	if err != nil {
 		log.Fatal("could not read config file: ", err)
@@ -28,7 +28,8 @@ func Run() {
 		log.Fatal("could not unmarshal config file: ", err)
 	}
 
-	dsn := "postgres://" + config.DataBase.DbUser + ":" + config.DataBase.DbPassword + "@" + config.DataBase.DbHost + ":" + config.DataBase.DbPort + "/" + config.DataBase.DbName + "?sslmode=disable"
+	dsn := "postgres://" + config.DataBase.DBUser + ":" + config.DataBase.DBPassword + "@" + config.DataBase.DBHost + ":" +
+		config.DataBase.DBPort + "/" + config.DataBase.DBName + "?sslmode=disable"
 	repository, err := currency.NewRepository(dsn)
 
 	if err != nil {
@@ -41,6 +42,6 @@ func Run() {
 
 	endpoint.CurrencyMonitor()
 
-	r.HandleFunc("/", endpoint.GetCurrencies)
+	router.HandleFunc("/", endpoint.GetCurrencies)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

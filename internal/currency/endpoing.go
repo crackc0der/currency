@@ -69,7 +69,7 @@ func (e Endpoint) SetCurrencies() {
 }
 
 func (e Endpoint) CurrencyMonitor() {
-	url := "https://currate.ru/api/?get=rates&pairs=BTCRUB,ETHRUB&key=" + e.config.ApiKey
+	url := "https://currate.ru/api/?get=rates&pairs=BTCRUB,ETHRUB&key=" + e.config.APIKey
 	var data DataCurrencyMonitor
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

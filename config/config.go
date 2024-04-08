@@ -3,15 +3,15 @@ package config
 type Config struct {
 	DataBase DataBase `yaml:"DataBase"`
 	Host     Host     `yaml:"Host"`
-	ApiKey   string   `yaml:"ApiKey"`
+	APIKey   string   `yaml:"APIKey"`
 }
 
 type DataBase struct {
-	DbHost     string `yaml:"DbHost"`
-	DbPort     string `yaml:"DbPort"`
-	DbName     string `yaml:"DbName"`
-	DbUser     string `yaml:"DbUser"`
-	DbPassword string `yaml:"DbPassword"`
+	DBHost     string `yaml:"DBHost"`
+	DBPort     string `yaml:"DBPort"`
+	DBName     string `yaml:"DBName"`
+	DBUser     string `yaml:"DBUser"`
+	DBPassword string `yaml:"DBPassword"`
 }
 
 type Host struct {
