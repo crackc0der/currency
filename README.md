@@ -1,2 +1,2 @@
-make up - start service | 
+make up - start service\ 
 make down - drop service
