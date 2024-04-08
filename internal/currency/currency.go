@@ -2,12 +2,10 @@ package currency
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Currency struct {
-	CurrencyID               uuid.UUID `json:"currencyId"`
+	CurrencyID               int64     `json:"currencyId"`
 	CurrencyName             string    `json:"currencyName"`
 	CurrencyPrice            float64   `json:"currencyPrice"`
 	CurrencyMinPrice         float64   `json:"currencyMinPrice"`

@@ -34,7 +34,7 @@ func (r Repository) SelectAllCurrencies(ctx context.Context) ([]Currency, error)
 		var currency Currency
 
 		err := rows.Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice, &currency.CurrencyMinPrice,
-			&currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange)
+			&currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange, &currency.CurrencyLastUpdate)
 		if err != nil {
 			return nil, fmt.Errorf("error in method SelectAllCurrensies: %w", err)
 		}
@@ -50,7 +50,7 @@ func (r Repository) SelectCurrency(ctx context.Context, name string) (*Currency,
 
 	query := "select * from currency where currency_name = $1"
 	err := r.conn.QueryRow(ctx, query, name).Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice,
-		&currency.CurrencyMinPrice, &currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange)
+		&currency.CurrencyMinPrice, &currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange, &currency.CurrencyLastUpdate)
 
 	if err != nil {
 		return nil, fmt.Errorf("error in method SelectCurrency: %w", err)

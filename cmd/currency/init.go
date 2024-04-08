@@ -15,7 +15,7 @@ import (
 )
 
 func Run() {
-	configFile, err := os.ReadFile("../../config/config.yaml")
+	configFile, err := os.ReadFile("config/config.yaml")
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	router := mux.NewRouter()
 	scheduler := gocron.NewScheduler(time.UTC)
@@ -48,6 +48,16 @@ func Run() {
 		scheduler.StartBlocking()
 	}()
 
-	router.HandleFunc("/", endpoint.GetCurrencies)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	router.HandleFunc("/rates", endpoint.GetCurrencies)
+	router.HandleFunc("/rates/{name}", endpoint.GetCurrency)
+
+	srv := http.Server{
+		Addr:              config.Host.HostPort,
+		Handler:           router,
+		ReadHeaderTimeout: time.Second * time.Duration(10),
+	}
+
+	if err := srv.ListenAndServe(); err != nil {
+		log.Fatal(err)
+	}
 }
