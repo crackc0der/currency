@@ -4,6 +4,7 @@ type Config struct {
 	DataBase DataBase `yaml:"dataBase"`
 	Host     Host     `yaml:"host"`
 	APIKey   string   `yaml:"apiKey"`
+	TimeOut  int      `yaml:"timeOut"`
 }
 
 type DataBase struct {

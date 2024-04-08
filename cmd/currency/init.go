@@ -7,7 +7,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/go-co-op/gocron"
 	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v3"
 )
@@ -16,6 +18,7 @@ func Run() {
 	configFile, err := os.ReadFile("../../config/config.yaml")
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	router := mux.NewRouter()
+	scheduler := gocron.NewScheduler(time.UTC)
 
 	if err != nil {
 		log.Fatal("could not read config file: ", err)
@@ -40,7 +43,10 @@ func Run() {
 
 	endpoint := currency.NewEndpoint(service, logger, &config)
 
-	endpoint.CurrencyMonitor()
+	scheduler.Every(config.TimeOut).Minutes().Do(endpoint.CurrencyMonitor)
+	go func() {
+		scheduler.StartBlocking()
+	}()
 
 	router.HandleFunc("/", endpoint.GetCurrencies)
 	log.Fatal(http.ListenAndServe(":8080", nil))

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"exchange_course/config"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -102,5 +103,7 @@ func (e Endpoint) CurrencyMonitor() {
 	err = e.service.SetCurrencies(context.Background(), data.Data)
 	if err != nil {
 		e.log.Error("error in method CurrentMonitor: %w", err)
+	} else {
+		fmt.Println("All OK!!!")
 	}
 }
