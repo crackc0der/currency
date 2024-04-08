@@ -1,11 +1,11 @@
 DataBase:
-  DBHost: "127.0.0.1"
-  DBPort: "5432"
-  DBName: "exachange_rates"
-  DBUser: "postgres"
-  DBPassword: "7777777"
+  dbHost: "127.0.0.1"
+  dbPort: "5432"
+  dbName: "exachange_rates"
+  dbUser: "postgres"
+  dbPassword: "7777777"
 
 Host:
-  HostPort: ":8080"
+  hostPort: ":8080"
 
-APIKey: "4e97f1d52a1f42aa64dca05e927d0459"
+apiKey: "4e97f1d52a1f42aa64dca05e927d0459"

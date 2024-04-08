@@ -50,15 +50,20 @@ func (s Service) GetCurrency(ctx context.Context, currencyName string) (*Currenc
 
 func (s Service) SetCurrencies(ctx context.Context, data Data) error {
 	var currencies []Currency
+
 	var currency Currency
+
 	var minPrice float64
+
 	var maxPrice float64
 
 	BTCRUB, err := strconv.ParseFloat(data.BTCRUB, 64)
 	if err != nil {
 		return fmt.Errorf("error in method SetCurrencies: %w", err)
 	}
+
 	ETHRUB, err := strconv.ParseFloat(data.ETHRUB, 64)
+
 	if err != nil {
 		return fmt.Errorf("error in method SetCurrencies: %w", err)
 	}
@@ -78,21 +83,18 @@ func (s Service) SetCurrencies(ctx context.Context, data Data) error {
 	}
 
 	for i := 0; i < len(currencyData); i++ {
-		c, _ := s.repository.SelectCurrency(ctx, currencyData[i].Name)
-		// if err != nil {
-		// 	return fmt.Errorf("error in method SetCurrencies: %w", err)
-		// }
+		curr, _ := s.repository.SelectCurrency(ctx, currencyData[i].Name)
 
-		if c != nil {
-			if currencyData[i].Price < c.CurrencyMinPrice {
+		if curr != nil {
+			if currencyData[i].Price < curr.CurrencyMinPrice {
 				minPrice = currencyData[i].Price
 			} else {
-				minPrice = c.CurrencyMinPrice
+				minPrice = curr.CurrencyMinPrice
 
-				if currencyData[i].Price > c.CurrencyMaxPrice {
-					maxPrice = c.CurrencyMaxPrice
+				if currencyData[i].Price > curr.CurrencyMaxPrice {
+					maxPrice = currencyData[i].Price
 				} else {
-					maxPrice = c.CurrencyMaxPrice
+					maxPrice = curr.CurrencyMaxPrice
 				}
 			}
 		} else {
@@ -107,7 +109,6 @@ func (s Service) SetCurrencies(ctx context.Context, data Data) error {
 		currency.CurrencyPercentageChange = 0.0
 
 		currencies = append(currencies, currency)
-		fmt.Println(currencyData[i])
 	}
 
 	_, err = s.repository.InsertCurrencies(ctx, currencies)

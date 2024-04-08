@@ -62,7 +62,8 @@ func (r Repository) SelectCurrency(ctx context.Context, name string) (*Currency,
 func (r Repository) InsertCurrencies(ctx context.Context, currencies []Currency) ([]Currency, error) {
 	query := `insert into currency (currency_name, price, price_min, price_max, changes_per_hour) 
 				values (@currencyName, @price, @priceMin, @priceMax, @changesPerHour) on conflict (currency_name) do update set
-				currency_name=@currencyName, price=@price, price_min=@priceMin, price_max=@priceMax, changes_per_hour=@changesPerHour`
+				currency_name=@currencyName, price=@price, price_min=@priceMin, price_max=@priceMax, 
+				changes_per_hour=@changesPerHour`
 	batch := &pgx.Batch{}
 
 	for _, currency := range currencies {
@@ -75,7 +76,6 @@ func (r Repository) InsertCurrencies(ctx context.Context, currencies []Currency)
 		}
 
 		batch.Queue(query, args)
-		fmt.Println(currency.CurrencyPrice)
 	}
 
 	results := r.conn.SendBatch(ctx, batch)

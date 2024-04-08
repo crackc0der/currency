@@ -1,19 +1,19 @@
 package config
 
 type Config struct {
-	DataBase DataBase `yaml:"DataBase"`
-	Host     Host     `yaml:"Host"`
-	APIKey   string   `yaml:"APIKey"`
+	DataBase DataBase `yaml:"dataBase"`
+	Host     Host     `yaml:"host"`
+	APIKey   string   `yaml:"apiKey"`
 }
 
 type DataBase struct {
-	DBHost     string `yaml:"DBHost"`
-	DBPort     string `yaml:"DBPort"`
-	DBName     string `yaml:"DBName"`
-	DBUser     string `yaml:"DBUser"`
-	DBPassword string `yaml:"DBPassword"`
+	DBHost     string `yaml:"dbHost"`
+	DBPort     string `yaml:"dbPort"`
+	DBName     string `yaml:"dbName"`
+	DBUser     string `yaml:"dbUser"`
+	DBPassword string `yaml:"dbPassword"`
 }
 
 type Host struct {
-	HostPort string `yaml:"HostPort"`
+	HostPort string `yaml:"hostPort"`
 }
