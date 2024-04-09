@@ -110,21 +110,29 @@ func (s Service) getCurrentPrice(ctx context.Context, data Data) ([]Currency, er
 	for _, curr := range currencyData {
 		currentData, _ := s.repository.SelectCurrency(ctx, curr.Name)
 
-		if currentData != nil {
-			if curr.Price < currentData.CurrencyMinPrice {
-				minPrice = curr.Price
-			} else {
-				minPrice = currentData.CurrencyMinPrice
+		// if currentData != nil {
+		// 	if curr.Price < currentData.CurrencyMinPrice {
+		// 		minPrice = curr.Price
+		// 	} else {
+		// 		minPrice = currentData.CurrencyMinPrice
 
-				if curr.Price > currentData.CurrencyMaxPrice {
-					maxPrice = curr.Price
-				} else {
-					maxPrice = currentData.CurrencyMaxPrice
-				}
-			}
-		} else {
+		// 		if curr.Price > currentData.CurrencyMaxPrice {
+		// 			maxPrice = curr.Price
+		// 		} else {
+		// 			maxPrice = currentData.CurrencyMaxPrice
+		// 		}
+		// 	}
+		// } else {
+		// 	minPrice = curr.Price
+		// 	maxPrice = curr.Price
+		// }
+
+		if currentData == nil {
 			minPrice = curr.Price
 			maxPrice = curr.Price
+		} else {
+			minPrice = s.updateMinPrice(curr.Price, currentData.CurrencyMinPrice)
+			maxPrice = s.updateMaxPrice(curr.Price, currentData.CurrencyMaxPrice)
 		}
 
 		currency.CurrencyName = curr.Name
@@ -187,4 +195,20 @@ func (s Service) CurrencyMonitor() {
 	if err != nil {
 		s.log.Error("error in Endpoint's method CurrentMonitor: %w", err)
 	}
+}
+
+func (s Service) updateMinPrice(currPrice, currentMinPrice float64) float64 {
+	if currPrice < currentMinPrice {
+		return currPrice
+	}
+
+	return currentMinPrice
+}
+
+func (s Service) updateMaxPrice(currPrice, currentMaxPrice float64) float64 {
+	if currPrice > currentMaxPrice {
+		return currPrice
+	}
+
+	return currentMaxPrice
 }
