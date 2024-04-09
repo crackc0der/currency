@@ -1,6 +1,6 @@
 linters:
- enable-all: true
- disable:
+  enable-all: true
+  disable:
    - exhaustivestruct
    - nosnakecase
    - interfacer
@@ -13,3 +13,9 @@ linters:
    - golint
    - inamedparam
    - depguard
+   - tagliatelle
+   - exhaustruct
+linters-settings:
+  funlen:
+    lines: 100
+    statements: 50

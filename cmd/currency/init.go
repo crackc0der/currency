@@ -1,60 +1,72 @@
 package main
 
 import (
-	"exchange_course/config"
-	"exchange_course/internal/currency"
+	"context"
+	"crypto/tls"
 	"log"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/crackc0der/currency/config"
+	"github.com/crackc0der/currency/internal/currency"
 	"github.com/go-co-op/gocron"
 	"github.com/gorilla/mux"
-	"gopkg.in/yaml.v3"
 )
 
 func Run() {
-	configFile, err := os.ReadFile("config/config.yaml")
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	router := mux.NewRouter()
 	scheduler := gocron.NewScheduler(time.UTC)
+	timeout := 10
+	idleTimeout := 15
+	MaxHeaderBytes := 20
+	readHeaderTimeout := 5
 
+	conf, err := config.NewConfig()
 	if err != nil {
-		log.Fatal("could not read config file: ", err)
+		log.Fatal(err)
 	}
 
-	config := config.Config{}
-	err = yaml.Unmarshal(configFile, &config)
+	dsn := config.GetDSN(conf)
 
-	if err != nil {
-		log.Fatal("could not unmarshal config file: ", err)
-	}
-
-	dsn := "postgres://" + config.DataBase.DBUser + ":" + config.DataBase.DBPassword + "@" + config.DataBase.DBHost + ":" +
-		config.DataBase.DBPort + "/" + config.DataBase.DBName + "?sslmode=disable"
 	repository, err := currency.NewRepository(dsn)
-
 	if err != nil {
 		log.Fatal("error creating repository: ", err)
 	}
 
-	service := currency.NewService(repository)
+	service := currency.NewService(repository, logger, conf)
 
-	endpoint := currency.NewEndpoint(service, logger, &config)
+	endpoint := currency.NewEndpoint(service, logger, conf)
 
-	scheduler.Every(config.TimeOut).Minutes().Do(endpoint.CurrencyMonitor)
-	go func() {
-		scheduler.StartBlocking()
-	}()
+	_, _ = scheduler.Every(conf.TimeOut).Minutes().Do(service.CurrencyMonitor)
+
+	go scheduler.StartBlocking()
 
 	router.HandleFunc("/rates", endpoint.GetCurrencies)
 	router.HandleFunc("/rates/{name}", endpoint.GetCurrency)
 
 	srv := http.Server{
-		Addr:              config.Host.HostPort,
-		Handler:           router,
-		ReadHeaderTimeout: time.Second * time.Duration(10),
+		Addr:           ":8080",
+		Handler:        router,
+		ReadTimeout:    time.Duration(timeout) * time.Second,
+		WriteTimeout:   time.Duration(timeout) * time.Second,
+		IdleTimeout:    time.Duration(idleTimeout) * time.Second,
+		MaxHeaderBytes: 1 << MaxHeaderBytes,
+		ErrorLog:       log.New(os.Stderr, "http: ", log.LstdFlags),
+		ConnState:      nil,
+		TLSConfig:      nil,
+		TLSNextProto:   make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
+		BaseContext: func(_ net.Listener) context.Context {
+			return context.Background()
+		},
+		ConnContext: func(ctx context.Context, _ net.Conn) context.Context {
+			return ctx
+		},
+		ReadHeaderTimeout:            time.Duration(readHeaderTimeout) * time.Second,
+		DisableGeneralOptionsHandler: true,
 	}
 
 	if err := srv.ListenAndServe(); err != nil {

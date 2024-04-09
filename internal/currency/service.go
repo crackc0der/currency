@@ -2,8 +2,16 @@ package currency
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
+	"net"
+	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/crackc0der/currency/config"
 )
 
 type RepositoryInterface interface {
@@ -15,10 +23,12 @@ type RepositoryInterface interface {
 
 type Service struct {
 	repository RepositoryInterface
+	log        *slog.Logger
+	config     *config.Config
 }
 
-func NewService(repository RepositoryInterface) *Service {
-	return &Service{repository: repository}
+func NewService(repository RepositoryInterface, log *slog.Logger, config *config.Config) *Service {
+	return &Service{repository: repository, log: log, config: config}
 }
 
 func (s Service) GetCurrencies(ctx context.Context) ([]Currency, error) {
@@ -39,33 +49,48 @@ func (s Service) GetCurrency(ctx context.Context, currencyName string) (*Currenc
 	return currency, nil
 }
 
-// func (s Service) SetCurrencies(ctx context.Context, currencies []Currency) ([]Currency, error) {
-// 	currencies, err := s.repository.InsertCurrencies(ctx, currencies)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to insert currencies in method SetCurrencies: %w", err)
-// 	}
-
-// 	return currencies, nil
-// }
-
 func (s Service) SetCurrencies(ctx context.Context, data Data) error {
-	var currencies []Currency
+	currencies, err := s.getCurrentPrice(ctx, data)
+	if err != nil {
+		return fmt.Errorf("error in Service's method SetCurrency: %w", err)
+	}
 
+	_, err = s.repository.InsertCurrencies(ctx, currencies)
+	if err != nil {
+		return fmt.Errorf("error in Service's method SetCurrency: %w", err)
+	}
+
+	return nil
+}
+
+func (s Service) GetChangesPerHour(ctx context.Context, currency string) (float64, error) {
+	change, err := s.repository.SelectChangesPerHour(ctx, currency)
+	if err != nil {
+		return -1, fmt.Errorf("error in Service's method GetChangesPerHour: %w", err)
+	}
+
+	return change, nil
+}
+
+func (s Service) getCurrentPrice(ctx context.Context, data Data) ([]Currency, error) {
 	var currency Currency
 
 	var minPrice float64
 
 	var maxPrice float64
 
+	currencyAmount := 2
+
+	currencies := make([]Currency, 0, currencyAmount)
+
 	BTCRUB, err := strconv.ParseFloat(data.BTCRUB, 64)
 	if err != nil {
-		return fmt.Errorf("error in method SetCurrencies: %w", err)
+		return nil, fmt.Errorf("error in Service's method SetCurrencies: %w", err)
 	}
 
 	ETHRUB, err := strconv.ParseFloat(data.ETHRUB, 64)
-
 	if err != nil {
-		return fmt.Errorf("error in method SetCurrencies: %w", err)
+		return nil, fmt.Errorf("error in Service's method SetCurrencies: %w", err)
 	}
 
 	currencyData := [2]struct {
@@ -82,28 +107,28 @@ func (s Service) SetCurrencies(ctx context.Context, data Data) error {
 		},
 	}
 
-	for i := 0; i < len(currencyData); i++ {
-		curr, _ := s.repository.SelectCurrency(ctx, currencyData[i].Name)
+	for _, curr := range currencyData {
+		currentData, _ := s.repository.SelectCurrency(ctx, curr.Name)
 
-		if curr != nil {
-			if currencyData[i].Price < curr.CurrencyMinPrice {
-				minPrice = currencyData[i].Price
+		if currentData != nil {
+			if curr.Price < currentData.CurrencyMinPrice {
+				minPrice = curr.Price
 			} else {
-				minPrice = curr.CurrencyMinPrice
+				minPrice = currentData.CurrencyMinPrice
 
-				if currencyData[i].Price > curr.CurrencyMaxPrice {
-					maxPrice = currencyData[i].Price
+				if curr.Price > currentData.CurrencyMaxPrice {
+					maxPrice = curr.Price
 				} else {
-					maxPrice = curr.CurrencyMaxPrice
+					maxPrice = currentData.CurrencyMaxPrice
 				}
 			}
 		} else {
-			minPrice = currencyData[i].Price
-			maxPrice = currencyData[i].Price
+			minPrice = curr.Price
+			maxPrice = curr.Price
 		}
 
-		currency.CurrencyName = currencyData[i].Name
-		currency.CurrencyPrice = currencyData[i].Price
+		currency.CurrencyName = curr.Name
+		currency.CurrencyPrice = curr.Price
 		currency.CurrencyMinPrice = minPrice
 		currency.CurrencyMaxPrice = maxPrice
 		currency.CurrencyPercentageChange = 0.0
@@ -111,19 +136,55 @@ func (s Service) SetCurrencies(ctx context.Context, data Data) error {
 		currencies = append(currencies, currency)
 	}
 
-	_, err = s.repository.InsertCurrencies(ctx, currencies)
-	if err != nil {
-		return fmt.Errorf("error in method SetCurrency: %w", err)
-	}
-
-	return nil
+	return currencies, nil
 }
 
-func (s Service) GetChangesPerHour(ctx context.Context, currency string) (float64, error) {
-	change, err := s.repository.SelectChangesPerHour(ctx, currency)
-	if err != nil {
-		return -1, fmt.Errorf("error in method GetChangesPerHour: %w", err)
+func (s Service) CurrencyMonitor() {
+	var data DataCurrencyMonitor
+
+	timeout := 5
+
+	timeOutClient := 3
+
+	transport := &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout: time.Duration(timeout) * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout: time.Duration(timeout) * time.Second,
 	}
 
-	return change, nil
+	url := "https://currate.ru/api/?get=rates&pairs=BTCRUB,ETHRUB&key=" + s.config.APIKey
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	if err != nil {
+		s.log.Error("error in Endpoint's method CurrencyMonitor: " + err.Error())
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{
+		Timeout:   time.Duration(timeOutClient) * time.Second,
+		Transport: transport,
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		s.log.Error("error in Endpoint's method CurrencyMonitor: " + err.Error())
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		s.log.Error("error in Endpoint's method CurrencyMonitor: " + err.Error())
+	}
+
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		s.log.Error("error in Endpoint's method CurrencyMonitor: ", err)
+	}
+
+	err = s.SetCurrencies(context.Background(), data.Data)
+	if err != nil {
+		s.log.Error("error in Endpoint's method CurrentMonitor: %w", err)
+	}
 }

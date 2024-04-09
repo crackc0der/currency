@@ -10,7 +10,7 @@ import (
 func NewRepository(dsn string) (*Repository, error) {
 	conn, err := pgx.Connect(context.Background(), dsn)
 	if err != nil {
-		return nil, fmt.Errorf("error in method NewRepository: %w", err)
+		return nil, fmt.Errorf("error in Repository's method NewRepository: %w", err)
 	}
 
 	return &Repository{conn: conn}, nil
@@ -24,10 +24,10 @@ func (r Repository) SelectAllCurrencies(ctx context.Context) ([]Currency, error)
 	var currencies []Currency
 
 	query := "select * from currency"
-	rows, err := r.conn.Query(ctx, query)
 
+	rows, err := r.conn.Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("error in method SelectCurrencies: %w", err)
+		return nil, fmt.Errorf("error in Repository's method SelectCurrencies: %w", err)
 	}
 
 	for rows.Next() {
@@ -36,7 +36,7 @@ func (r Repository) SelectAllCurrencies(ctx context.Context) ([]Currency, error)
 		err := rows.Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice, &currency.CurrencyMinPrice,
 			&currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange, &currency.CurrencyLastUpdate)
 		if err != nil {
-			return nil, fmt.Errorf("error in method SelectAllCurrensies: %w", err)
+			return nil, fmt.Errorf("error in Repository's method SelectAllCurrensies: %w", err)
 		}
 
 		currencies = append(currencies, currency)
@@ -49,11 +49,12 @@ func (r Repository) SelectCurrency(ctx context.Context, name string) (*Currency,
 	var currency Currency
 
 	query := "select * from currency where currency_name = $1"
-	err := r.conn.QueryRow(ctx, query, name).Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice,
-		&currency.CurrencyMinPrice, &currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange, &currency.CurrencyLastUpdate)
 
+	err := r.conn.QueryRow(ctx, query, name).Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice,
+		&currency.CurrencyMinPrice, &currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange,
+		&currency.CurrencyLastUpdate)
 	if err != nil {
-		return nil, fmt.Errorf("error in method SelectCurrency: %w", err)
+		return nil, fmt.Errorf("error in Repository's method SelectCurrency: %w", err)
 	}
 
 	return &currency, nil
@@ -84,7 +85,7 @@ func (r Repository) InsertCurrencies(ctx context.Context, currencies []Currency)
 	for _, currency := range currencies {
 		_, err := results.Exec()
 		if err != nil {
-			return nil, fmt.Errorf("error to add %s in method InsertCurrencies %w", currency.CurrencyName, err)
+			return nil, fmt.Errorf("error to add %s in Repository's method InsertCurrencies %w", currency.CurrencyName, err)
 		}
 	}
 
@@ -95,10 +96,10 @@ func (r Repository) SelectChangesPerHour(ctx context.Context, curr string) (floa
 	var currencyPerHour float64
 
 	query := "select changes_per_hour from currency where currency_name = $1"
-	err := r.conn.QueryRow(ctx, query, curr).Scan(&currencyPerHour)
 
+	err := r.conn.QueryRow(ctx, query, curr).Scan(&currencyPerHour)
 	if err != nil {
-		return -1, fmt.Errorf("error in method method SelectChangesPerHour %w", err)
+		return -1, fmt.Errorf("error in Repository's method SelectChangesPerHour %w", err)
 	}
 
 	return currencyPerHour, nil
