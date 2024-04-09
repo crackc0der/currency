@@ -110,23 +110,6 @@ func (s Service) getCurrentPrice(ctx context.Context, data Data) ([]Currency, er
 	for _, curr := range currencyData {
 		currentData, _ := s.repository.SelectCurrency(ctx, curr.Name)
 
-		// if currentData != nil {
-		// 	if curr.Price < currentData.CurrencyMinPrice {
-		// 		minPrice = curr.Price
-		// 	} else {
-		// 		minPrice = currentData.CurrencyMinPrice
-
-		// 		if curr.Price > currentData.CurrencyMaxPrice {
-		// 			maxPrice = curr.Price
-		// 		} else {
-		// 			maxPrice = currentData.CurrencyMaxPrice
-		// 		}
-		// 	}
-		// } else {
-		// 	minPrice = curr.Price
-		// 	maxPrice = curr.Price
-		// }
-
 		if currentData == nil {
 			minPrice = curr.Price
 			maxPrice = curr.Price
