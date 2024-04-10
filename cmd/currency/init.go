@@ -41,7 +41,8 @@ func Run() {
 
 	endpoint := currency.NewEndpoint(service, logger, conf)
 
-	_, _ = scheduler.Every(conf.TimeOut).Minutes().Do(service.CurrencyMonitor)
+	_, _ = scheduler.Every(conf.TimeOutUpdate).Seconds().Do(service.CurrencyMonitor)
+	_, _ = scheduler.Every(conf.TimeOutUpdatePerHour).Seconds().Do(service.SetChangesPerHour)
 
 	go scheduler.StartBlocking()
 

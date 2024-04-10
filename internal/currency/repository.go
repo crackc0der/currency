@@ -5,10 +5,11 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func NewRepository(dsn string) (*Repository, error) {
-	conn, err := pgx.Connect(context.Background(), dsn)
+	conn, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		return nil, fmt.Errorf("error in Repository's method NewRepository: %w", err)
 	}
@@ -17,7 +18,7 @@ func NewRepository(dsn string) (*Repository, error) {
 }
 
 type Repository struct {
-	conn *pgx.Conn
+	conn *pgxpool.Pool
 }
 
 func (r Repository) SelectAllCurrencies(ctx context.Context) ([]Currency, error) {
@@ -34,7 +35,7 @@ func (r Repository) SelectAllCurrencies(ctx context.Context) ([]Currency, error)
 		var currency Currency
 
 		err := rows.Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice, &currency.CurrencyMinPrice,
-			&currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange, &currency.CurrencyLastUpdate)
+			&currency.CurrencyMaxPrice, &currency.CurrencyChangePerHour, &currency.CurrencyLastUpdate)
 		if err != nil {
 			return nil, fmt.Errorf("error in Repository's method SelectAllCurrensies: %w", err)
 		}
@@ -51,7 +52,7 @@ func (r Repository) SelectCurrency(ctx context.Context, name string) (*Currency,
 	query := "select * from currency where currency_name = $1"
 
 	err := r.conn.QueryRow(ctx, query, name).Scan(&currency.CurrencyID, &currency.CurrencyName, &currency.CurrencyPrice,
-		&currency.CurrencyMinPrice, &currency.CurrencyMaxPrice, &currency.CurrencyPercentageChange,
+		&currency.CurrencyMinPrice, &currency.CurrencyMaxPrice, &currency.CurrencyChangePerHour,
 		&currency.CurrencyLastUpdate)
 	if err != nil {
 		return nil, fmt.Errorf("error in Repository's method SelectCurrency: %w", err)
@@ -73,7 +74,7 @@ func (r Repository) InsertCurrencies(ctx context.Context, currencies []Currency)
 			"price":          currency.CurrencyPrice,
 			"priceMin":       currency.CurrencyMinPrice,
 			"priceMax":       currency.CurrencyMaxPrice,
-			"changesPerHour": currency.CurrencyPercentageChange,
+			"changesPerHour": currency.CurrencyChangePerHour,
 		}
 
 		batch.Queue(query, args)
@@ -103,4 +104,30 @@ func (r Repository) SelectChangesPerHour(ctx context.Context, curr string) (floa
 	}
 
 	return currencyPerHour, nil
+}
+
+func (r Repository) SetChangesPerHour(ctx context.Context, currencies []Currency) error {
+	query := `update currency set changes_per_hour=@changesPerHour where currency_name=@currencyName`
+
+	batch := &pgx.Batch{}
+
+	for _, currency := range currencies {
+		args := pgx.NamedArgs{
+			"currencyName":   currency.CurrencyName,
+			"changesPerHour": currency.CurrencyChangePerHour,
+		}
+		batch.Queue(query, args)
+	}
+
+	results := r.conn.SendBatch(ctx, batch)
+	defer results.Close()
+
+	for _, currency := range currencies {
+		_, err := results.Exec()
+		if err != nil {
+			return fmt.Errorf("error to add %s in Repository's method SetChangesPerHour: %w", currency.CurrencyName, err)
+		}
+	}
+
+	return nil
 }

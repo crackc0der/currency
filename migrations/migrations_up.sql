@@ -4,7 +4,7 @@ create table if not exists currency (
     price float not null,
     price_min float not null,
     price_max float not null,
-    changes_per_hour float not null,
+    changes_per_hour float not null default 0.00,
     last_update time(0) default now()
 );
 

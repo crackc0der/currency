@@ -19,6 +19,7 @@ type RepositoryInterface interface {
 	SelectCurrency(context.Context, string) (*Currency, error)
 	InsertCurrencies(context.Context, []Currency) ([]Currency, error)
 	SelectChangesPerHour(context.Context, string) (float64, error)
+	SetChangesPerHour(context.Context, []Currency) error
 }
 
 type Service struct {
@@ -122,7 +123,7 @@ func (s Service) getCurrentPrice(ctx context.Context, data Data) ([]Currency, er
 		currency.CurrencyPrice = curr.Price
 		currency.CurrencyMinPrice = minPrice
 		currency.CurrencyMaxPrice = maxPrice
-		currency.CurrencyPercentageChange = 0.0
+		currency.CurrencyChangePerHour = 0.0
 
 		currencies = append(currencies, currency)
 	}
@@ -131,6 +132,31 @@ func (s Service) getCurrentPrice(ctx context.Context, data Data) ([]Currency, er
 }
 
 func (s Service) CurrencyMonitor() {
+	data := s.getMonitorData()
+
+	err := s.SetCurrencies(context.Background(), data.Data)
+	if err != nil {
+		s.log.Error("error in Endpoint's method CurrentMonitor: %w", err)
+	}
+}
+
+func (s Service) updateMinPrice(currPrice, currentMinPrice float64) float64 {
+	if currPrice < currentMinPrice {
+		return currPrice
+	}
+
+	return currentMinPrice
+}
+
+func (s Service) updateMaxPrice(currPrice, currentMaxPrice float64) float64 {
+	if currPrice > currentMaxPrice {
+		return currPrice
+	}
+
+	return currentMaxPrice
+}
+
+func (s Service) getMonitorData() *DataCurrencyMonitor {
 	var data DataCurrencyMonitor
 
 	timeout := 5
@@ -174,24 +200,47 @@ func (s Service) CurrencyMonitor() {
 		s.log.Error("error in Endpoint's method CurrencyMonitor: ", err)
 	}
 
-	err = s.SetCurrencies(context.Background(), data.Data)
+	return &data
+}
+
+func (s Service) SetChangesPerHour() {
+	var currency []Currency
+
+	currenciesInDB, err := s.repository.SelectAllCurrencies(context.Background())
 	if err != nil {
-		s.log.Error("error in Endpoint's method CurrentMonitor: %w", err)
-	}
-}
-
-func (s Service) updateMinPrice(currPrice, currentMinPrice float64) float64 {
-	if currPrice < currentMinPrice {
-		return currPrice
+		s.log.Error("error in method GetCurrency: %w", err)
 	}
 
-	return currentMinPrice
-}
+	currentData := s.getMonitorData()
 
-func (s Service) updateMaxPrice(currPrice, currentMaxPrice float64) float64 {
-	if currPrice > currentMaxPrice {
-		return currPrice
+	if err != nil {
+		s.log.Error("error in method SetChangesPerHourn: %w", err)
 	}
 
-	return currentMaxPrice
+	for _, curr := range currenciesInDB {
+		if curr.CurrencyName == "BTC" {
+			data, err := strconv.ParseFloat(currentData.Data.BTCRUB, 64)
+			if err != nil {
+				s.log.Error("error in method SetChangesPerHourn: %w", err)
+			}
+
+			curr.CurrencyChangePerHour = data - curr.CurrencyPrice
+			currency = append(currency, curr)
+		}
+
+		if curr.CurrencyName == "ETH" {
+			data, err := strconv.ParseFloat(currentData.Data.ETHRUB, 64)
+			if err != nil {
+				s.log.Error("error in method SetChangesPerHourn: %w", err)
+			}
+
+			curr.CurrencyChangePerHour = data - curr.CurrencyPrice
+			currency = append(currency, curr)
+		}
+	}
+
+	err = s.repository.SetChangesPerHour(context.Background(), currency)
+	if err != nil {
+		s.log.Error("error in Service's method SetChangesPerHour: %w", err)
+	}
 }

@@ -8,10 +8,11 @@ import (
 )
 
 type Config struct {
-	DataBase DataBase `yaml:"dataBase"`
-	Host     Host     `yaml:"host"`
-	APIKey   string   `yaml:"apiKey"`
-	TimeOut  int      `yaml:"timeOut"`
+	DataBase             DataBase `yaml:"dataBase"`
+	Host                 Host     `yaml:"host"`
+	APIKey               string   `yaml:"apiKey"`
+	TimeOutUpdate        int      `yaml:"timeOutUpdate"`
+	TimeOutUpdatePerHour int      `yaml:"timeOutUpdatePerHour"`
 }
 
 type DataBase struct {
