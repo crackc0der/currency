@@ -1,5 +1,5 @@
 up:
-	docker-compose up
+	docker-compose up -d
 
 down:
 	@docker ps -aq | xargs docker rm -f || true
