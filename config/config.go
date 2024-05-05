@@ -11,6 +11,7 @@ type Config struct {
 	DataBase             DataBase `yaml:"dataBase"`
 	Host                 Host     `yaml:"host"`
 	APIKey               string   `yaml:"apiKey"`
+	BOTAPIKey            string   `yaml:"botApiKey"`
 	TimeOutUpdate        int      `yaml:"timeOutUpdate"`
 	TimeOutUpdatePerHour int      `yaml:"timeOutUpdatePerHour"`
 }

@@ -41,10 +41,11 @@ func Run() {
 
 	endpoint := currency.NewEndpoint(service, logger, conf)
 
-	_, _ = scheduler.Every(conf.TimeOutUpdate).Seconds().Do(service.CurrencyMonitor)
-	_, _ = scheduler.Every(conf.TimeOutUpdatePerHour).Seconds().Do(service.SetChangesPerHour)
+	_, _ = scheduler.Every(conf.TimeOutUpdate).Hours().Do(service.CurrencyMonitor)
+	_, _ = scheduler.Every(conf.TimeOutUpdatePerHour).Hours().Do(service.SetChangesPerHour)
 
 	go scheduler.StartBlocking()
+	go currency.BotRun(conf.BOTAPIKey, service)
 
 	router.HandleFunc("/rates", endpoint.GetCurrencies)
 	router.HandleFunc("/rates/{name}", endpoint.GetCurrency)

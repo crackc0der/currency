@@ -8,7 +8,9 @@ dataBase:
 host:
   hostPort: ":8080"
 
-apiKey: "bcd374ecbd4d9f8f5b2cf25f12dc901b"
+apiKey: "14bf0c254b342edb4742253e3d60d821"
+botApiKey: "6790196562:AAFezq6o9eZRyTrleY3xMbUvAsnaCPeVhc8"
 
 timeOutUpdate: 5
 timeOutUpdatePerHour: 1
+
