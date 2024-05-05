@@ -10,10 +10,20 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+)
+
+var (
+	ErrNoCurrencies              = errors.New("currency not found")
+	ErrGetCorrenciesNoCurrencies = errors.New("error in method GetCurrencies currency not found")
+	ErrGetCorrencyNoCorrency     = errors.New("error in method GetCurrency: currency not found")
+	ErrGetChangesPerHour         = errors.New("error in Service's method GetChangesPerHour: currency not found")
 )
 
 func TestSelectAllCurrencies(t *testing.T) {
 	// SelectAllCurrencies(ctx context.Context) ([]Currency, error)
+	t.Parallel()
+
 	repo := new(MockRepo)
 
 	setList := func(currencies []Currency, err error) {
@@ -21,7 +31,7 @@ func TestSelectAllCurrencies(t *testing.T) {
 	}
 
 	const layout = "2006-01-02T15:04:05Z07:00"
-	tm, _ := time.Parse(layout, "2024-04-16T12:00:00+03:00")
+	time, _ := time.Parse(layout, "2024-04-16T12:00:00+03:00")
 
 	tests := []struct {
 		name    string
@@ -41,7 +51,7 @@ func TestSelectAllCurrencies(t *testing.T) {
 							CurrencyMinPrice:      27.00,
 							CurrencyMaxPrice:      120.00,
 							CurrencyChangePerHour: 11.42,
-							CurrencyLastUpdate:    tm,
+							CurrencyLastUpdate:    time,
 						},
 					},
 					nil,
@@ -55,7 +65,7 @@ func TestSelectAllCurrencies(t *testing.T) {
 					CurrencyMinPrice:      27.00,
 					CurrencyMaxPrice:      120.00,
 					CurrencyChangePerHour: 11.42,
-					CurrencyLastUpdate:    tm,
+					CurrencyLastUpdate:    time,
 				},
 			},
 			wantErr: nil,
@@ -63,10 +73,10 @@ func TestSelectAllCurrencies(t *testing.T) {
 		{
 			name: "some error",
 			setup: func() {
-				setList(nil, errors.New("no currencies"))
+				setList(nil, ErrNoCurrencies)
 			},
 			want:    nil,
-			wantErr: errors.New("error in method GetCurrencies no currencies"),
+			wantErr: ErrGetCorrenciesNoCurrencies,
 		},
 		{
 			name: "empty list",
@@ -80,26 +90,29 @@ func TestSelectAllCurrencies(t *testing.T) {
 
 	svc := NewService(repo, slog.New(slog.NewTextHandler(os.Stdout, nil)), nil)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(y *testing.T) {
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
 			defer repo.AssertExpectations(t)
 
-			tt.setup()
+			testCase.setup()
 
 			got, err := svc.GetCurrencies(context.Background())
-			if err != nil && assert.Error(t, tt.wantErr, err.Error()) {
-				assert.EqualError(t, err, tt.wantErr.Error())
+			if err != nil {
+				require.EqualError(t, err, testCase.wantErr.Error())
 			} else {
-				assert.NoError(t, tt.wantErr)
+				require.NoError(t, testCase.wantErr)
 			}
 
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, testCase.want, got)
 		})
 	}
 }
 
 func TestSelectCurrency(t *testing.T) {
 	// SelectCurrency(ctx context.Context, name string) (*Currency, error)
+	t.Parallel()
+
 	repo := new(MockRepo)
 
 	type args struct {
@@ -111,7 +124,7 @@ func TestSelectCurrency(t *testing.T) {
 	}
 
 	const layout = "2006-01-02T15:04:05Z07:00"
-	tm, _ := time.Parse(layout, "2024-04-16T12:00:00+03:00")
+	time, _ := time.Parse(layout, "2024-04-16T12:00:00+03:00")
 
 	tests := []struct {
 		name    string
@@ -131,7 +144,7 @@ func TestSelectCurrency(t *testing.T) {
 						CurrencyMinPrice:      27.00,
 						CurrencyMaxPrice:      120.00,
 						CurrencyChangePerHour: 11.42,
-						CurrencyLastUpdate:    tm,
+						CurrencyLastUpdate:    time,
 					},
 					"USD",
 					nil,
@@ -147,142 +160,59 @@ func TestSelectCurrency(t *testing.T) {
 				CurrencyMinPrice:      27.00,
 				CurrencyMaxPrice:      120.00,
 				CurrencyChangePerHour: 11.42,
-				CurrencyLastUpdate:    tm,
+				CurrencyLastUpdate:    time,
 			},
 			wantErr: nil,
 		},
 		{
 			name: "some error",
 			setup: func() {
-				setList(nil, "ETH", errors.New("currency not found"))
+				setList(nil, "ETH", ErrNoCurrencies)
 			},
 			args: args{
 				name: "ETH",
 			},
 			want:    nil,
-			wantErr: errors.New("error in method GetCurrency: currency not found"),
+			wantErr: ErrGetCorrencyNoCorrency,
 		},
 		{
 			name: "empty list",
 			setup: func() {
-				setList(nil, "", errors.New("currency not found"))
+				setList(nil, "", ErrNoCurrencies)
 			},
 			args: args{
 				name: "",
 			},
 			want:    nil,
-			wantErr: errors.New("error in method GetCurrency: currency not found"),
+			wantErr: ErrGetCorrencyNoCorrency,
 		},
 	}
 
 	svc := NewService(repo, slog.New(slog.NewTextHandler(os.Stdout, nil)), nil)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(y *testing.T) {
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
 			defer repo.AssertExpectations(t)
 
-			tt.setup()
+			testCase.setup()
 
-			got, err := svc.GetCurrency(context.Background(), tt.args.name)
-			if err != nil && assert.Error(t, tt.wantErr, err.Error()) {
-				assert.EqualError(t, err, tt.wantErr.Error())
+			got, err := svc.GetCurrency(context.Background(), testCase.args.name)
+			if err != nil {
+				require.EqualError(t, err, testCase.wantErr.Error())
 			} else {
-				assert.NoError(t, tt.wantErr)
+				require.NoError(t, testCase.wantErr)
 			}
 
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestInsertCurrencies(t *testing.T) {
-	// InsertCurrencies(ctx context.Context, currencies []Currency) ([]Currency, error)
-	repo := new(MockRepo)
-
-	setList := func(currencies []Currency, err error) {
-		repo.On("SelectAllCurrencies", mock.Anything).Return(currencies, err).Once()
-	}
-
-	const layout = "2006-01-02T15:04:05Z07:00"
-	tm, _ := time.Parse(layout, "2024-04-16T12:00:00+03:00")
-
-	tests := []struct {
-		name    string
-		setup   func()
-		want    []Currency
-		wantErr error
-	}{
-		{
-			name: "success",
-			setup: func() {
-				setList(
-					[]Currency{
-						{
-							CurrencyID:            1,
-							CurrencyName:          "USD",
-							CurrencyPrice:         90.42,
-							CurrencyMinPrice:      27.00,
-							CurrencyMaxPrice:      120.00,
-							CurrencyChangePerHour: 11.42,
-							CurrencyLastUpdate:    tm,
-						},
-					},
-					nil,
-				)
-			},
-			want: []Currency{
-				{
-					CurrencyID:            1,
-					CurrencyName:          "USD",
-					CurrencyPrice:         90.42,
-					CurrencyMinPrice:      27.00,
-					CurrencyMaxPrice:      120.00,
-					CurrencyChangePerHour: 11.42,
-					CurrencyLastUpdate:    tm,
-				},
-			},
-			wantErr: nil,
-		},
-		{
-			name: "some error",
-			setup: func() {
-				setList(nil, errors.New("no currencies"))
-			},
-			want:    nil,
-			wantErr: errors.New("error in method GetCurrencies no currencies"),
-		},
-		{
-			name: "empty list",
-			setup: func() {
-				setList(nil, nil)
-			},
-			want:    nil,
-			wantErr: nil,
-		},
-	}
-
-	svc := NewService(repo, slog.New(slog.NewTextHandler(os.Stdout, nil)), nil)
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(y *testing.T) {
-			defer repo.AssertExpectations(t)
-
-			tt.setup()
-
-			got, err := svc.GetCurrencies(context.Background())
-			if err != nil && assert.Error(t, tt.wantErr, err.Error()) {
-				assert.EqualError(t, err, tt.wantErr.Error())
-			} else {
-				assert.NoError(t, tt.wantErr)
-			}
-
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, testCase.want, got)
 		})
 	}
 }
 
 func TestSelectChangesPerHour(t *testing.T) {
 	// SelectChangesPerHour(ctx context.Context, curr string) (float64, error)
+	t.Parallel()
+
 	repo := new(MockRepo)
 
 	type args struct {
@@ -318,47 +248,48 @@ func TestSelectChangesPerHour(t *testing.T) {
 		{
 			name: "some error",
 			setup: func() {
-				setList("ETH", -1, errors.New("currency not found"))
+				setList("ETH", -1, ErrNoCurrencies)
 			},
 			args: args{
 				name: "ETH",
 			},
 			want:    -1,
-			wantErr: errors.New("error in Service's method GetChangesPerHour: currency not found"),
+			wantErr: ErrGetChangesPerHour,
 		},
 		{
 			name: "empty list",
 			setup: func() {
-				setList("", -1, errors.New("currency not found"))
+				setList("", -1, ErrNoCurrencies)
 			},
 			args: args{
 				name: "",
 			},
 			want:    -1,
-			wantErr: errors.New("error in Service's method GetChangesPerHour: currency not found"),
+			wantErr: ErrGetChangesPerHour,
 		},
 	}
 
 	svc := NewService(repo, slog.New(slog.NewTextHandler(os.Stdout, nil)), nil)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(y *testing.T) {
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
 			defer repo.AssertExpectations(t)
 
-			tt.setup()
+			testCase.setup()
 
-			got, err := svc.GetChangesPerHour(context.Background(), tt.args.name)
-			if err != nil && assert.Error(t, tt.wantErr, err.Error()) {
-				assert.EqualError(t, err, tt.wantErr.Error())
+			got, err := svc.GetChangesPerHour(context.Background(), testCase.args.name)
+			if err != nil {
+				require.EqualError(t, err, testCase.wantErr.Error())
 			} else {
-				assert.NoError(t, tt.wantErr)
+				require.NoError(t, testCase.wantErr)
 			}
 
-			assert.Equal(t, tt.want, got)
+			assert.InEpsilon(t, testCase.want, got, 0.0001)
 		})
 	}
 }
 
-func TestSetChangesPerHour(t *testing.T) {
-	// SetChangesPerHour(ctx context.Context, currencies []Currency) error
-}
+// func TestSetChangesPerHour(t *testing.T) {
+// 	// SetChangesPerHour(ctx context.Context, currencies []Currency) error
+// }

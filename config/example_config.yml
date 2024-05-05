@@ -1,0 +1,16 @@
+dataBase:
+  dbHost: ""
+  dbPort: ""
+  dbName: ""
+  dbUser: ""
+  dbPassword: ""
+
+host:
+  hostPort: ":8080"
+
+apiKey: "api key for api service https://currate.ru/"
+botApiKey: "telegram bot api key"
+
+timeOutUpdate: 5
+timeOutUpdatePerHour: 1
+

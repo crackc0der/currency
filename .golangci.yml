@@ -11,10 +11,11 @@ linters:
    - scopelint
    - ifshort
    - golint
-   - inamedparam
-   - depguard
-   - tagliatelle
+  #  - inamedparam
+  #  - depguard
+  #  - tagliatelle
    - exhaustruct
+  #  - testpackage
 linters-settings:
   funlen:
     lines: 100
