@@ -31,7 +31,7 @@ type Host struct {
 func NewConfig() (*Config, error) {
 	var config Config
 
-	configFile, err := os.ReadFile("config/config.yaml")
+	configFile, err := os.ReadFile("config/config.yml")
 	if err != nil {
 		return nil, fmt.Errorf("error reading config file: %w", err)
 	}
