@@ -1,4 +1,4 @@
-make up - up service  
+make up - start service  
 make run - run service
 make down - drop service and delete folder "data" with database
 
